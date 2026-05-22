@@ -1,0 +1,6 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="mb-4 flex justify-between"><h1 class="text-2xl font-bold">Verleihvorgaenge</h1><a href="{{ route('loans.create') }}" class="rounded bg-emerald-600 px-4 py-2 text-white">Neuer Verleih</a></div>
+<div class="overflow-hidden rounded bg-white shadow"><table class="w-full text-left text-sm"><thead class="bg-slate-100"><tr><th class="p-3">Fahrzeug</th><th>Empfaenger</th><th>Status</th><th>Geplante Rueckgabe</th><th>Aktion</th></tr></thead><tbody>@foreach($loans as $loan)<tr class="border-t"><td class="p-3"><a class="text-blue-700" href="{{ route('vehicles.show', $loan->vehicle) }}">{{ $loan->vehicle->inventory_number }}</a></td><td>{{ $loan->borrower_name }}<br><span class="text-slate-500">{{ $loan->company_name }}</span></td><td>{{ $loan->status }} @if($loan->isOverdue())<span class="text-red-700">ueberfaellig</span>@endif</td><td>{{ $loan->planned_return_at->format('d.m.Y H:i') }}</td><td>@if($loan->status === \App\Models\Loan::STATUS_ACTIVE)<a class="text-emerald-700" href="{{ route('loans.return.form', $loan) }}">Rueckgabe</a>@endif</td></tr>@endforeach</tbody></table></div><div class="mt-4">{{ $loans->links() }}</div>
+@endsection

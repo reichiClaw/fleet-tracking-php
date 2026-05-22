@@ -15,6 +15,8 @@ return [
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
+    'fleet_disk' => env('FLEET_STORAGE_DISK', 'fleet_private'),
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks
@@ -45,6 +47,27 @@ return [
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
+        ],
+
+        'fleet_private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/fleet'),
+            'visibility' => 'private',
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'fleet_sftp' => [
+            'driver' => 'sftp',
+            'host' => env('FLEET_SFTP_HOST'),
+            'port' => (int) env('FLEET_SFTP_PORT', 22),
+            'username' => env('FLEET_SFTP_USERNAME'),
+            'password' => env('FLEET_SFTP_PASSWORD'),
+            'privateKey' => env('FLEET_SFTP_PRIVATE_KEY'),
+            'passphrase' => env('FLEET_SFTP_PASSPHRASE'),
+            'root' => env('FLEET_SFTP_ROOT', '/'),
+            'visibility' => 'private',
+            'throw' => false,
         ],
 
         's3' => [
