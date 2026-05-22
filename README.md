@@ -53,6 +53,53 @@ Wichtige PHP Extensions:
 
 ## Installation auf einem normalen Webserver
 
+### Variante A: fertiges Bundle ohne npm auf dem Server
+
+Wenn auf dem Webserver kein npm verfuegbar ist, nutze das fertige Release-Bundle:
+
+```text
+release/fuhrpark-app-ready.tar.gz
+```
+
+Dieses Archiv enthaelt bereits:
+
+- den Laravel-Code
+- `vendor/` mit Produktions-Composer-Abhaengigkeiten
+- `public/build/` mit fertig gebauten Frontend-Assets
+
+Auf dem Server:
+
+```bash
+mkdir -p /var/www/fuhrpark-app
+tar -xzf fuhrpark-app-ready.tar.gz --strip-components=1 -C /var/www/fuhrpark-app
+cd /var/www/fuhrpark-app
+
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed --force
+php artisan storage:link
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+chown -R www-data:www-data storage bootstrap/cache
+chmod -R 775 storage bootstrap/cache
+```
+
+Der Webserver zeigt weiterhin auf:
+
+```text
+/var/www/fuhrpark-app/public
+```
+
+Das Bundle kann neu erzeugt werden mit:
+
+```bash
+bash scripts/build-webserver-release.sh
+```
+
+### Variante B: Installation mit Composer und npm auf dem Server
+
 ```bash
 cd /var/www
 git clone <repo-url> fuhrpark-app

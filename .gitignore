@@ -21,6 +21,7 @@
 /storage/*.key
 /storage/pail
 /vendor
+/release/fuhrpark-app-ready/
 _ide_helper.php
 Homestead.json
 Homestead.yaml
