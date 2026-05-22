@@ -18,6 +18,14 @@ The archive contains:
 
 The target webserver does **not** need npm. It also does **not** need Composer for installing PHP dependencies, because `vendor/` is included in the archive.
 
+For FTP-only hosting, upload the extracted archive and open:
+
+```text
+https://your-domain.example/install.php
+```
+
+The browser installer asks for the required setup information and runs the Laravel setup from PHP.
+
 ## Rebuild the bundle
 
 From the repository root:
@@ -40,3 +48,5 @@ Configure Apache/Nginx to use:
 ```
 
 as the document root.
+
+After the installer succeeds, delete `public/install.php` by FTP.

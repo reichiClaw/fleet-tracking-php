@@ -46,44 +46,44 @@ Required on the webserver:
 - MySQL or MariaDB database
 - Apache or Nginx with document root pointing to this folder's public/ directory
 
-Deployment:
+FTP/browser deployment:
 1. Upload/extract this folder to the server, for example:
    /var/www/fuhrpark-app
 
-2. Create the production environment file:
-   cp .env.example .env
-
-3. Edit .env:
-   APP_ENV=production
-   APP_DEBUG=false
-   APP_URL=https://your-domain.example
-   DB_CONNECTION=mysql
-   DB_HOST=127.0.0.1
-   DB_PORT=3306
-   DB_DATABASE=fuhrpark
-   DB_USERNAME=fuhrpark_user
-   DB_PASSWORD=your_secure_password
-
-4. Run the Laravel setup commands:
-   php artisan key:generate
-   php artisan migrate --seed --force
-   php artisan storage:link
-   php artisan config:cache
-   php artisan route:cache
-   php artisan view:cache
-
-5. Set writable permissions:
-   chown -R www-data:www-data storage bootstrap/cache
-   chmod -R 775 storage bootstrap/cache
-
-6. Configure the webserver document root to:
+2. Configure the webserver document root to:
    /var/www/fuhrpark-app/public
 
-Seed login:
-- admin@example.com / password
-- verwaltung@example.com / password
+3. Open the browser installer:
+   https://your-domain.example/install.php
 
-Change both passwords immediately after first login.
+4. Enter:
+   - APP URL
+   - MySQL/MariaDB database credentials
+   - first admin user
+   - optional fleet manager user
+   - local or SFTP file storage
+
+5. The installer will:
+   - create .env
+   - test the database connection
+   - run migrations
+   - create the admin user
+   - create default vehicle categories
+   - create the storage link if possible
+   - cache Laravel config/routes/views
+   - create storage/app/install.lock
+
+6. For security, delete public/install.php by FTP after successful setup.
+
+If the installer reports that folders are not writable, set these folders writable
+through the hosting control panel or FTP permissions:
+
+- storage
+- storage/app
+- storage/framework
+- bootstrap/cache
+
+The admin login is the email/password you enter in the installer.
 EOF
 
 tar -czf "$ARCHIVE" -C "$RELEASE_DIR" fuhrpark-app-ready

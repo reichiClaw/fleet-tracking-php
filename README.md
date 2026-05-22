@@ -72,18 +72,6 @@ Auf dem Server:
 ```bash
 mkdir -p /var/www/fuhrpark-app
 tar -xzf fuhrpark-app-ready.tar.gz --strip-components=1 -C /var/www/fuhrpark-app
-cd /var/www/fuhrpark-app
-
-cp .env.example .env
-php artisan key:generate
-php artisan migrate --seed --force
-php artisan storage:link
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-
-chown -R www-data:www-data storage bootstrap/cache
-chmod -R 775 storage bootstrap/cache
 ```
 
 Der Webserver zeigt weiterhin auf:
@@ -91,6 +79,33 @@ Der Webserver zeigt weiterhin auf:
 ```text
 /var/www/fuhrpark-app/public
 ```
+
+Wenn du nur FTP-Zugriff hast, lade den entpackten Ordner per FTP hoch und oeffne danach im Browser:
+
+```text
+https://deine-domain.example/install.php
+```
+
+Der Installer fragt alle benoetigten Informationen ab:
+
+- App-Name und App-URL
+- MySQL/MariaDB Host, Port, Datenbank, Benutzer und Passwort
+- erster Admin-Benutzer
+- optionaler Verwaltungsuser
+- lokale Dateiablage oder SFTP-Ablage
+
+Der Installer erledigt danach:
+
+- `.env` erzeugen
+- Datenbankverbindung testen
+- Migrationen ausfuehren
+- Admin-Benutzer anlegen
+- Standard-Fahrzeugkategorien anlegen
+- Storage-Link erzeugen, falls der Hoster Symlinks erlaubt
+- Laravel Config/Routes/Views cachen
+- Installer per `storage/app/install.lock` sperren
+
+Nach erfolgreicher Installation sollte `public/install.php` per FTP geloescht werden.
 
 Das Bundle kann neu erzeugt werden mit:
 
