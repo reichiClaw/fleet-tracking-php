@@ -1,58 +1,232 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Fuhrpark Management Laravel App
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel-Webanwendung fuer die Verwaltung eines Fahrzeugpools ohne Docker. Die App ist fuer einen klassischen Apache- oder Nginx-Webserver mit PHP und MySQL/MariaDB gedacht.
 
-## About Laravel
+## Enthaltene Funktionen
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Login mit Rollen `admin` und `fleet_manager`
+- Dashboard mit Statusuebersicht und ueberfaelligen Rueckgaben
+- Fahrzeugpool mit Suche, Filtern und Status
+- Fahrzeugverwaltung mit Kategorien und Excel/CSV-Import
+- QR-Code pro Fahrzeug mit geschuetzter Scan-URL
+- Check-in bei Anlieferung mit KM, Betriebsstunden, Zustand, Schaeden und Fotos
+- Hersteller-Auschecken mit Protokoll und Statuswechsel
+- Verleih an Subfirma oder internen Fahrer mit geplanter Rueckgabe und Signaturfeld
+- Rueckgabe mit KM, Betriebsstunden, Schaeden und Fotos
+- Fahrer-Stammdatenbank
+- Private Foto-/Signaturablage lokal oder optional per SFTP
+- REST API v1 mit Laravel Sanctum fuer spaetere Mobile-App-Anbindung
+- Audit-Log-Grundlage fuer wichtige Workflow-Aktionen
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Technischer Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- PHP 8.3+
+- Laravel 13
+- MySQL/MariaDB in Produktion, SQLite fuer lokale Tests moeglich
+- Blade + Tailwind CSS + kleines JavaScript fuer Signaturen
+- Laravel Sanctum fuer API Tokens
+- PhpSpreadsheet fuer Excel/CSV-Import
+- chillerlan/php-qrcode fuer QR-Codes
+- Laravel Filesystem mit lokaler privater Disk oder SFTP
 
-## Learning Laravel
+## Serveranforderungen
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Installiert sein sollten:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+php8.3 php8.3-fpm php8.3-cli php8.3-mysql php8.3-mbstring php8.3-xml php8.3-curl php8.3-zip php8.3-gd
+composer
+nodejs npm
+mysql-server oder mariadb-server
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Wichtige PHP Extensions:
 
-## Contributing
+- pdo_mysql
+- mbstring
+- fileinfo
+- gd
+- zip
+- xml
+- curl
+- openssl
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Installation auf einem normalen Webserver
 
-## Code of Conduct
+```bash
+cd /var/www
+git clone <repo-url> fuhrpark-app
+cd fuhrpark-app
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+cp .env.example .env
+composer install --no-dev --optimize-autoloader
+npm install
+npm run build
 
-## Security Vulnerabilities
+php artisan key:generate
+php artisan migrate --seed
+php artisan storage:link
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+chown -R www-data:www-data storage bootstrap/cache
+chmod -R 775 storage bootstrap/cache
+```
 
-## License
+Der Webserver muss auf dieses Verzeichnis zeigen:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```text
+/var/www/fuhrpark-app/public
+```
+
+Nicht auf das Projekt-Hauptverzeichnis.
+
+## Beispiel-Login nach Seed
+
+```text
+Admin:       admin@example.com / password
+Verwaltung:  verwaltung@example.com / password
+```
+
+Passwoerter nach der Installation sofort aendern.
+
+## MySQL/MariaDB `.env`
+
+```env
+APP_NAME="Fuhrpark Management"
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://fuhrpark.example.com
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=fuhrpark
+DB_USERNAME=fuhrpark_user
+DB_PASSWORD=secure_password
+
+FILESYSTEM_DISK=local
+FLEET_STORAGE_DISK=fleet_private
+```
+
+## Optionale SFTP-Dateiablage
+
+Die Datenbank bleibt immer MySQL/MariaDB. SFTP ist nur fuer Fotos, Signaturen und spaetere Dokumente gedacht.
+
+```env
+FLEET_STORAGE_DISK=fleet_sftp
+FLEET_SFTP_HOST=fileserver.example.com
+FLEET_SFTP_PORT=22
+FLEET_SFTP_USERNAME=fuhrpark
+FLEET_SFTP_PASSWORD=secret
+FLEET_SFTP_ROOT=/data/fuhrpark
+```
+
+Alternativ kann ein Private Key verwendet werden:
+
+```env
+FLEET_SFTP_PRIVATE_KEY=/var/www/.ssh/fuhrpark_storage
+FLEET_SFTP_PASSPHRASE=
+```
+
+## Apache VirtualHost
+
+```apache
+<VirtualHost *:80>
+    ServerName fuhrpark.example.com
+    DocumentRoot /var/www/fuhrpark-app/public
+
+    <Directory /var/www/fuhrpark-app/public>
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/fuhrpark_error.log
+    CustomLog ${APACHE_LOG_DIR}/fuhrpark_access.log combined
+</VirtualHost>
+```
+
+Danach HTTPS z. B. mit Certbot aktivieren.
+
+## Nginx Server Block
+
+```nginx
+server {
+    listen 80;
+    server_name fuhrpark.example.com;
+
+    root /var/www/fuhrpark-app/public;
+    index index.php index.html;
+    client_max_body_size 50M;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+    }
+}
+```
+
+## REST API fuer spaetere App
+
+Basis: `/api/v1`
+
+```http
+POST /api/v1/login
+GET  /api/v1/me
+POST /api/v1/logout
+GET  /api/v1/vehicles
+GET  /api/v1/vehicles/{vehicle}
+POST /api/v1/vehicles/scan/{token}
+POST /api/v1/vehicles/{vehicle}/check-in
+POST /api/v1/vehicles/{vehicle}/loan
+POST /api/v1/loans/{loan}/return
+```
+
+Login liefert ein Sanctum Token. Mobile Apps senden danach:
+
+```http
+Authorization: Bearer <token>
+Accept: application/json
+```
+
+## Tests
+
+```bash
+php artisan test
+npm run build
+```
+
+## Backup
+
+Regelmaessig sichern:
+
+- MySQL/MariaDB Datenbank
+- `storage/app/fleet`
+- `.env`
+- optional SFTP Zielordner
+
+Beispiel Datenbankbackup:
+
+```bash
+mysqldump -u fuhrpark_user -p fuhrpark > backup-fuhrpark.sql
+```
+
+Beispiel Datei-Backup:
+
+```bash
+rsync -a /var/www/fuhrpark-app/storage/app/fleet/ /backup/fuhrpark-files/
+```
+
+## Naechste sinnvolle Ausbaustufen
+
+- PDF-Protokolle fuer Check-in, Verleih und Rueckgabe
+- Reparaturworkflow fuer Schaeden
+- QR-Code Sammeldruck als Etikettenbogen
+- Benachrichtigungen fuer ueberfaellige Rueckgaben
+- feinere Rollen/Rechte pro Standort
+- OpenAPI-Dokumentation fuer die Mobile App

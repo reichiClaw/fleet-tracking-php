@@ -4,7 +4,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name', 'Fuhrpark Management') }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @if(file_exists(public_path('hot')) || file_exists(public_path('build/manifest.json')))
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @else
+        <style>
+            body { font-family: system-ui, sans-serif; margin: 0; }
+            .bg-slate-100 { background: #f1f5f9; } .bg-slate-900 { background: #0f172a; }
+            .text-white { color: #fff; } .text-slate-900 { color: #0f172a; }
+        </style>
+    @endif
 </head>
 <body class="bg-slate-100 text-slate-900">
     <header class="bg-slate-900 text-white shadow">

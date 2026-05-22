@@ -11,6 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use RuntimeException;
 
 class LoanController extends Controller
 {
@@ -58,7 +59,12 @@ class LoanController extends Controller
             $data['phone'] = $driver?->phone;
         }
 
-        [$loan, $inspection] = $workflow->loanOut(Vehicle::findOrFail($data['vehicle_id']), $data, $request->user());
+        try {
+            [$loan, $inspection] = $workflow->loanOut(Vehicle::findOrFail($data['vehicle_id']), $data, $request->user());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['vehicle_id' => $exception->getMessage()])->withInput();
+        }
+
         $media->storePhotos($request, $loan->vehicle, $inspection);
         $media->storeSignatureDataUrl($request, $loan);
 
@@ -84,7 +90,12 @@ class LoanController extends Controller
             'photos.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:12288'],
         ]);
 
-        $inspection = $workflow->returnLoan($loan, $data, $request->user());
+        try {
+            $inspection = $workflow->returnLoan($loan, $data, $request->user());
+        } catch (RuntimeException $exception) {
+            return back()->withErrors(['loan' => $exception->getMessage()])->withInput();
+        }
+
         $media->storePhotos($request, $loan->vehicle, $inspection);
 
         return redirect()->route('vehicles.show', $loan->vehicle)->with('status', 'Rueckgabe wurde gespeichert.');
