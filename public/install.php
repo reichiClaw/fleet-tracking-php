@@ -134,8 +134,75 @@ function installer_post_bool(string $key): bool
     return isset($_POST[$key]) && in_array((string) $_POST[$key], ['1', 'true', 'on', 'yes'], true);
 }
 
+
+function installer_prerequisites(string $basePath, string $envPath): array
+{
+    $checks = [];
+
+    $add = static function (string $label, bool $ok, bool $required, string $message) use (&$checks): void {
+        $checks[] = [
+            'label' => $label,
+            'ok' => $ok,
+            'required' => $required,
+            'message' => $message,
+        ];
+    };
+
+    $add('PHP version', version_compare(PHP_VERSION, '8.3.0', '>='), true, 'Found PHP '.PHP_VERSION.'. Required: PHP 8.3 or newer.');
+
+    foreach (['pdo', 'pdo_mysql', 'mbstring', 'fileinfo', 'gd', 'zip', 'xml', 'dom', 'simplexml', 'curl', 'openssl', 'tokenizer', 'ctype', 'json'] as $extension) {
+        $add('PHP extension: '.$extension, extension_loaded($extension), true, extension_loaded($extension) ? 'Loaded.' : 'Missing. Enable/install php-'.$extension.' on the server.');
+    }
+
+    $pdoMysqlAvailable = class_exists('PDO') && in_array('mysql', PDO::getAvailableDrivers(), true);
+    $add('PDO MySQL driver', $pdoMysqlAvailable, true, 'Required for MySQL/MariaDB database access.');
+    $add('Composer vendor files', file_exists($basePath.'/vendor/autoload.php'), true, 'The ready bundle must include vendor/autoload.php. Re-upload the complete release archive if missing.');
+    $add('Laravel bootstrap', file_exists($basePath.'/bootstrap/app.php'), true, 'bootstrap/app.php must exist.');
+    $add('Built frontend assets', file_exists($basePath.'/public/build/manifest.json'), true, 'public/build/manifest.json must exist. Rebuild/re-upload the ready bundle if missing.');
+    $add('.env writable', installer_can_write_env($envPath, $basePath), true, 'The installer must be able to create or update .env.');
+
+    foreach (['storage', 'storage/app', 'storage/framework', 'storage/framework/cache', 'storage/framework/sessions', 'storage/framework/views', 'bootstrap/cache'] as $directory) {
+        $path = $basePath.'/'.$directory;
+        $add($directory.' writable', is_dir($path) && is_writable($path), true, $path);
+    }
+
+    $add('APP_KEY generation', function_exists('random_bytes'), true, 'PHP random_bytes() is required to generate the app key.');
+    $add('File uploads enabled', (bool) ini_get('file_uploads'), false, 'Required later for vehicle photos. Current upload_max_filesize: '.ini_get('upload_max_filesize').'.');
+    $add('Symlink support', function_exists('symlink'), false, 'Recommended for php artisan storage:link. Some shared hosters disable symlinks; uploads can still be stored privately.');
+
+    return $checks;
+}
+
+function installer_prerequisite_errors(array $checks): array
+{
+    $errors = [];
+
+    foreach ($checks as $check) {
+        if ($check['required'] && ! $check['ok']) {
+            $errors[] = 'Server prerequisite missing: '.$check['label'].' - '.$check['message'];
+        }
+    }
+
+    return $errors;
+}
+
+function installer_status_badge(bool $ok, bool $required): string
+{
+    if ($ok) {
+        return '<span class="badge badge-ok">OK</span>';
+    }
+
+    return $required
+        ? '<span class="badge badge-error">Required</span>'
+        : '<span class="badge badge-warn">Optional</span>';
+}
+
 function installer_render(array $errors = [], array $warnings = [], bool $success = false): void
 {
+    global $basePath, $envPath;
+
+    $prerequisites = installer_prerequisites($basePath, $envPath);
+    $hasBlockingPrerequisite = (bool) installer_prerequisite_errors($prerequisites);
     $isSftp = ($_POST['fleet_disk'] ?? 'fleet_private') === 'fleet_sftp';
     http_response_code($errors ? 422 : 200);
     ?>
@@ -152,8 +219,9 @@ function installer_render(array $errors = [], array $warnings = [], bool $succes
         h1{margin-top:0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
         label{font-weight:650;font-size:14px} input,select{display:block;width:100%;box-sizing:border-box;margin-top:6px;border:1px solid #cbd5e1;border-radius:10px;padding:10px;font:inherit}
         .full{grid-column:1/-1}.hint{font-size:13px;color:#64748b}.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}.warn{background:#fffbeb;color:#92400e;border:1px solid #fde68a}.ok{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
-        .box{border-radius:10px;padding:12px;margin-bottom:14px}.btn{border:0;border-radius:10px;background:#0f172a;color:white;padding:12px 18px;font-weight:700;cursor:pointer}
+        .box{border-radius:10px;padding:12px;margin-bottom:14px}.btn{border:0;border-radius:10px;background:#0f172a;color:white;padding:12px 18px;font-weight:700;cursor:pointer}.btn[disabled]{background:#94a3b8;cursor:not-allowed}
         code{background:#e2e8f0;border-radius:5px;padding:2px 5px}.toggle{display:flex;align-items:center;gap:8px}.toggle input{width:auto}
+        table{width:100%;border-collapse:collapse;font-size:14px}td,th{border-top:1px solid #e2e8f0;padding:9px;text-align:left;vertical-align:top}.badge{display:inline-block;border-radius:999px;padding:3px 8px;font-size:12px;font-weight:800}.badge-ok{background:#dcfce7;color:#166534}.badge-error{background:#fee2e2;color:#991b1b}.badge-warn{background:#fef3c7;color:#92400e}
         @media(max-width:720px){.grid{grid-template-columns:1fr}}
     </style>
     <script>
@@ -197,6 +265,24 @@ function installer_render(array $errors = [], array $warnings = [], bool $succes
                 <ul><?php foreach ($warnings as $warning): ?><li><?= installer_h($warning) ?></li><?php endforeach; ?></ul>
             </div>
         <?php endif; ?>
+
+
+        <div class="card">
+            <h2>Server prerequisites</h2>
+            <p class="hint">These checks run directly on this webserver. Required red items must be fixed before installation can continue.</p>
+            <table>
+                <thead><tr><th>Status</th><th>Check</th><th>Details</th></tr></thead>
+                <tbody>
+                    <?php foreach ($prerequisites as $check): ?>
+                        <tr>
+                            <td><?= installer_status_badge($check['ok'], $check['required']) ?></td>
+                            <td><?= installer_h($check['label']) ?></td>
+                            <td><?= installer_h($check['message']) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
 
         <form method="post">
             <div class="card">
@@ -298,7 +384,8 @@ function installer_render(array $errors = [], array $warnings = [], bool $succes
             <div class="card">
                 <h2>Run installer</h2>
                 <p class="hint">The installer will run database migrations. If tables already exist, make a backup first.</p>
-                <button class="btn" type="submit">Install now</button>
+                <?php if ($hasBlockingPrerequisite): ?><p class="box error">Installation is blocked until all required server prerequisites are OK.</p><?php endif; ?>
+                <button class="btn" type="submit" <?= $hasBlockingPrerequisite ? 'disabled' : '' ?>>Install now</button>
             </div>
         </form>
     <?php endif; ?>
@@ -329,7 +416,7 @@ $required = [
     'admin_name', 'admin_email', 'admin_password', 'admin_password_confirmation',
 ];
 
-$errors = [];
+$errors = installer_prerequisite_errors(installer_prerequisites($basePath, $envPath));
 foreach ($required as $field) {
     if (trim((string) ($_POST[$field] ?? '')) === '') {
         $errors[] = 'Missing required field: '.$field;

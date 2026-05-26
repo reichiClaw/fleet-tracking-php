@@ -56,14 +56,22 @@ FTP/browser deployment:
 3. Open the browser installer:
    https://your-domain.example/install.php
 
-4. Enter:
+4. The first section checks the server prerequisites:
+   - PHP 8.3+
+   - required PHP extensions
+   - MySQL/MariaDB PDO driver
+   - writable storage/bootstrap folders
+   - included vendor/ dependencies
+   - included public/build/ frontend assets
+
+5. Enter:
    - APP URL
    - MySQL/MariaDB database credentials
    - first admin user
    - optional fleet manager user
    - local or SFTP file storage
 
-5. The installer will:
+6. The installer will:
    - create .env
    - test the database connection
    - run migrations
@@ -73,7 +81,7 @@ FTP/browser deployment:
    - cache Laravel config/routes/views
    - create storage/app/install.lock
 
-6. For security, delete public/install.php by FTP after successful setup.
+7. For security, delete public/install.php by FTP after successful setup.
 
 If the installer reports that folders are not writable, set these folders writable
 through the hosting control panel or FTP permissions:

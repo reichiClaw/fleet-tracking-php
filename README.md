@@ -88,6 +88,7 @@ https://deine-domain.example/install.php
 
 Der Installer fragt alle benoetigten Informationen ab:
 
+- Server-Voraussetzungen wie PHP-Version, PHP-Extensions, Schreibrechte, `vendor/` und `public/build/`
 - App-Name und App-URL
 - MySQL/MariaDB Host, Port, Datenbank, Benutzer und Passwort
 - erster Admin-Benutzer
@@ -96,6 +97,7 @@ Der Installer fragt alle benoetigten Informationen ab:
 
 Der Installer erledigt danach:
 
+- blockiert die Installation, falls eine kritische Server-Voraussetzung fehlt
 - `.env` erzeugen
 - Datenbankverbindung testen
 - Migrationen ausfuehren

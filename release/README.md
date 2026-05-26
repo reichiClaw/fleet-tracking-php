@@ -25,6 +25,9 @@ https://your-domain.example/install.php
 ```
 
 The browser installer asks for the required setup information and runs the Laravel setup from PHP.
+It also checks the target server first, including PHP version, PHP extensions,
+MySQL/MariaDB PDO support, writable folders, included `vendor/` dependencies,
+and built `public/build/` assets.
 
 ## Rebuild the bundle
 
